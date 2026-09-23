@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Linux Command Detective - Virtual Linux File System</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;padding:20px}
+.app{max-width:1150px;margin:auto}
+h1{text-align:center;color:#67e8f9;margin-bottom:6px}
+.sub{text-align:center;color:#94a3b8;margin-bottom:18px}
+.layout{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.box{background:#111827;border:1px solid #334155;border-radius:14px;padding:16px}
+.terminal{background:#020617;border-radius:10px;height:520px;padding:15px;overflow:auto}
+.screen{font-family:Consolas,monospace;white-space:pre-wrap;line-height:1.5;color:#d1fae5}
+.prompt{color:#67e8f9}
+input{width:100%;margin-top:10px;padding:12px;background:#020617;border:1px solid #475569;border-radius:8px;color:#fff;font-family:Consolas,monospace}
+button{background:#0891b2;color:white;border:0;border-radius:7px;padding:9px 12px;margin:4px;cursor:pointer}
+button:hover{background:#0e7490}
+.tree{background:#020617;border-radius:9px;padding:12px;min-height:220px;white-space:pre;font-family:Consolas,monospace;color:#cbd5e1}
+.info{line-height:1.6;color:#cbd5e1}
+h2{color:#a5f3fc;margin-bottom:10px}
+@media(max-width:800px){.layout{grid-template-columns:1fr}.terminal{height:430px}}
+</style>
+</head>
+<body>
+<div class="app">
+<h1>🐧 Linux Command Detective</h1>
+<p class="sub">A Human-Mindset Virtual Linux File System & Command Simulator</p>
+
+<div class="layout">
+<div class="box">
+<div class="terminal" id="terminal">
+<div class="screen" id="screen">Linux Command Detective
+Virtual Linux File System
+--------------------------------
+Nothing on your real computer is changed.
+
+Type "help" to see commands.
+Try: pwd, ls, mkdir project, cd project, touch main.java
+
+</div><span class="prompt" id="prompt">student@linux:/home/student$ </span><input id="cmd" autofocus placeholder="Enter Linux command...">
+</div>
+<div>
+<button onclick="quick('help')">help</button>
+<button onclick="quick('pwd')">pwd</button>
+<button onclick="quick('ls')">ls</button>
+<button onclick="quick('mkdir project')">mkdir project</button>
+<button onclick="quick('cd project')">cd project</button>
+<button onclick="quick('touch main.java')">touch main.java</button>
+<button onclick="quick('clear')">clear</button>
+</div>
+</div>
+
+<div class="box">
+<h2>Virtual File System</h2>
+<div class="tree" id="tree"></div>
+<br>
+<h2>What You Are Learning</h2>
+<div class="info">
+• Think like a Linux user<br>
+• Understand directories and paths<br>
+• Practice commands safely<br>
+• Learn by experimenting<br>
+• See how a file system is organized<br>
+• Build confidence before using real Linux
+</div>
+<br>
+<h2>Current Path</h2>
+<div id="path">/home/student</div>
+</div>
+</div>
+</div>
+
+<script>
+const root={
+name:"home",type:"dir",children:[
+{name:"student",type:"dir",children:[
+{name:"welcome.txt",type:"file"},
+{name:"projects",type:"dir",children:[]},
+{name:"documents",type:"dir",children:[]}
+]}
+]};
+
+let current=root.children[0];
+let currentPath=["home","student"];
+let history=[];
+
+const screen=document.getElementById("screen");
+const input=document.getElementById("cmd");
+const prompt=document.getElementById("prompt");
+
+function folder(){
+return current.children||[];
+}
+
+function path(){
+return "/"+currentPath.join("/");
+}
+
+function print(x){
+screen.textContent+=x+"\\n";
+document.getElementById("terminal").scrollTop=999999;
+}
+
+function findChild(name){
+return folder().find(x=>x.name===name);
+}
+
+function showTree(node,depth=0){
+let text="  ".repeat(depth)+"├── "+node.name+(node.type==="dir"?"/":"")+"\\n";
+if(node.children){
+node.children.forEach(c=>text+=showTree(c,depth+1));
+}
+return text;
+}
+
+function update(){
+prompt.textContent="student@linux:"+path()+"$ ";
+document.getElementById("path").textContent=path();
+document.getElementById("tree").textContent=showTree(root);
+}
+
+function quick(x){
+input.value=x;
+run();
+}
+
+function run(){
+let raw=input.value.trim();
+if(!raw)return;
+
+print("\\n"+prompt.textContent+raw);
+history.push(raw);
+
+let p=raw.split(/\\s+/);
+let command=p[0];
+let arg=p.slice(1).join(" ");
+
+if(command==="help"){
+print("Available commands:");
+print("pwd              show current path");
+print("ls               list files and folders");
+print("cd <name>        enter a folder");
+print("cd ..            go to parent folder");
+print("mkdir <name>     create a folder");
+print("touch <name>     create a file");
+print("rm <name>        delete a file/folder");
+print("echo <text>      display text");
+print("whoami           show current user");
+print("history          show previous commands");
+print("clear            clear terminal");
+}
+else if(command==="pwd"){
+print(path());
+}
+else if(command==="ls"){
+let items=folder();
+if(!items.length)print("(empty)");
+else items.forEach(x=>print(x.type==="dir"?x.name+"/":x.name));
+}
+else if(command==="cd"){
+if(!arg||arg==="."){}
+else if(arg===".."){
+if(currentPath.length>2){
+current=current.parent;
+currentPath.pop();
+}else print("Already at /home/student");
+}else{
+let target=findChild(arg);
+if(target&&target.type==="dir"){
+target.parent=current;
+current=target;
+currentPath.push(arg);
+}else print("bash: cd: "+arg+": No such directory");
+}
+}
+else if(command==="mkdir"){
+if(!arg){print("mkdir: missing operand");}
+else if(findChild(arg)){print("mkdir: cannot create directory '"+arg+"': File exists");}
+else{let n={name:arg,type:"dir",children:[],parent:current};folder().push(n);print("Directory created: "+arg);}
+}
+else if(command==="touch"){
+if(!arg){print("touch: missing file operand");}
+else if(findChild(arg)){print("File already exists: "+arg);}
+else{folder().push({name:arg,type:"file",parent:current});print("File created: "+arg);}
+}
+else if(command==="rm"){
+if(!arg){print("rm: missing operand");}
+else{
+let i=folder().findIndex(x=>x.name===arg);
+if(i<0)print("rm: cannot remove '"+arg+"': No such file or directory");
+else{folder().splice(i,1);print("Removed: "+arg);}
+}
+}
+else if(command==="echo"){
+print(arg);
+}
+else if(command==="whoami"){
+print("student");
+}
+else if(command==="history"){
+history.forEach((x,i)=>print((i+1)+"  "+x));
+}
+else if(command==="clear"){
+screen.textContent="";
+}
+else{
+print("bash: "+command+": command not found");
+print("Tip: type 'help' to see supported commands.");
+}
+
+input.value="";
+update();
+}
+
+input.addEventListener("keydown",e=>{if(e.key==="Enter")run()});
+update();
+</script>
+</body>
+</html>
