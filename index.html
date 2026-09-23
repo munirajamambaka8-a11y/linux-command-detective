@@ -100,7 +100,7 @@ return "/"+currentPath.join("/");
 }
 
 function print(x){
-screen.textContent+=x+"\\n";
+screen.textContent+=x+"\n";
 document.getElementById("terminal").scrollTop=999999;
 }
 
@@ -109,7 +109,7 @@ return folder().find(x=>x.name===name);
 }
 
 function showTree(node,depth=0){
-let text="  ".repeat(depth)+"├── "+node.name+(node.type==="dir"?"/":"")+"\\n";
+let text="  ".repeat(depth)+"├── "+node.name+(node.type==="dir"?"/":"")+"\n";
 if(node.children){
 node.children.forEach(c=>text+=showTree(c,depth+1));
 }
@@ -131,10 +131,10 @@ function run(){
 let raw=input.value.trim();
 if(!raw)return;
 
-print("\\n"+prompt.textContent+raw);
+print("\n"+prompt.textContent+raw);
 history.push(raw);
 
-let p=raw.split(/\\s+/);
+let p=raw.split(/\s+/);
 let command=p[0];
 let arg=p.slice(1).join(" ");
 
